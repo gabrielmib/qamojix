@@ -24,11 +24,18 @@ namespace yopmailQA.Tests
 
         public string projectName = "Test project 001";
 
+
         [TestInitialize]
         public void TestInitialize()
         {
             driver = BrowserFactory.CreateChromeDriver();
             wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+            driver.Manage().Window.Maximize();
+
+            
+            IJavaScriptExecutor jsExecutor = (IJavaScriptExecutor)driver;
+            jsExecutor.ExecuteScript("document.body.style.zoom = '50%';");
+            
 
             // Go to login page
             driver.Navigate().GoToUrl(urlTodoist + "/auth/login" );
@@ -74,24 +81,47 @@ namespace yopmailQA.Tests
             projectNameTextBox.SendKeys(Keys.Enter);
 
             //Verify project creation
-            IWebElement projectItem = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//ul/li[@data-type='project_list_item'][last()]//a/span[last()]")));
-            Assert.AreEqual(projectName, projectItem.Text, "No coincide nombre de proyecto" );
-            projectItem.Click();
+            IWebElement projectItem = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//ul/li[@data-type='project_list_item'][last()]//a/span[last()]")));
+            Assert.AreEqual(projectName, projectItem.Text, "No coincide nombre de proyecto" );            
 
+            // EDIT PROJECT
             //Cick actions menu
-            IWebElement actionMenu = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@id='projects_list']/li[last()]/div/div/div/button")));            
+            IWebElement actionMenu = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@id='projects_list']/li[last()]/div/div/div/button")));            
             actionMenu.Click();
             
-            IWebElement actionEdit = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//ul[@role='menu']/li//div[contains(text(), 'Editar')]")));            
+            // Click Edit option
+            IWebElement actionEdit = wait.Until(ExpectedConditions.ElementExists(By.XPath("//ul[@role='menu']/li//div[contains(text(), 'Editar')]")));            
             actionEdit.Click();
             
             //Type new project name
-            // IWebElement projectNameEditTextBox = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit_project_modal_field_name")));
-            // projectNameEditTextBox.SendKeys(projectName + "modified");
-            // projectNameEditTextBox.SendKeys(Keys.Enter);
+            IWebElement projectNameEditTextBox = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("edit_project_modal_field_name")));
+            projectNameEditTextBox.SendKeys(" - Modified");
+            projectNameEditTextBox.SendKeys(Keys.Enter);
             
+            //Verify project name has been modified
+            IWebElement projectItemMod = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//ul/li[@data-type='project_list_item'][last()]//a/span[last()]")));
+            Assert.AreEqual(projectName+ " - Modified", projectItemMod.Text, "No coincide nombre de proyecto" );            
+
+            //DELETE PROJECT
+            //Cick actions menu
+            IWebElement actionMenuMod = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@id='projects_list']/li[last()]/div/div/div/button")));            
+            actionMenuMod.Click();
+            
+            // Click Delete option
+            IWebElement actionDelete = wait.Until(ExpectedConditions.ElementExists(By.XPath("//ul[@role='menu']/li//div[contains(text(), 'Eliminar')]")));            
+            actionDelete.Click();
+
+            //Confirm delete
+            IWebElement confirmDelete = wait.Until(ExpectedConditions.ElementExists(By.XPath("//button[@data-autofocus]")));            
+            confirmDelete.Click();
+
+            //Verify the last item  contains default "mis cosas"
+            IWebElement defaultItemMod = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//ul/li[@data-type='project_list_item'][last()]//a/span[last()]")));
+            Assert.AreEqual("Mis Cosas", defaultItemMod.Text.Trim(), "No coincide nombre de proyecto por defecto" );            
+
+
             // Wait for 3 seconds (just for demonstration purposes)
-            System.Threading.Thread.Sleep(3000);
+            System.Threading.Thread.Sleep(6000);
         }
 
         
